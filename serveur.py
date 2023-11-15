@@ -1,38 +1,62 @@
 import socket
 import ssl
 
-# Charger le certificat du serveur
-server_cert = "serveur_http.cert.pem"
-server_key = "serveur_http.pem"
+# Paramètres du serveur
+HOST = '127.0.0.1'  # Adresse IP du serveur
+PORT = 12345         # Port d'écoute du serveur
+CERTFILE = 'serveur_http.cert.pem'  # Chemin vers le certificat du serveur
+KEYFILE = 'serveur_http.pem'   # Chemin vers la clé privée du serveur
 
 # Configuration du serveur
-server_address = ('127.0.0.1', 8888)
+server_address = (HOST, PORT)
 
 # Créer un socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind(server_address)
 server_socket.listen(1)
 
-print('Le serveur écoute sur {}:{}'.format(*server_address))
+print(f"Le serveur écoute sur {HOST}:{PORT}")
 
-while True:
-    print('En attente de la connexion...')
+# Initialisation de secure_client_socket en dehors du bloc try
+secure_client_socket = None
+
+try:
+    # Attente de la connexion d'un client
     client_socket, client_address = server_socket.accept()
+    print(f"Connexion établie avec {client_address}")
 
-    # Wrap the socket in SSL
-    ssl_socket = ssl.wrap_socket(client_socket, keyfile=server_key, certfile=server_cert, server_side=True,
-                                 cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1_2)
+    # Wrapping du socket dans SSL
+    secure_client_socket = ssl.wrap_socket(
+        client_socket, keyfile=KEYFILE, certfile=CERTFILE, server_side=True)
 
-    print('Connexion depuis', client_address)
+    # Envoi du certificat au client
+    with open(CERTFILE, 'rb') as cert_file:
+        server_cert_bytes = cert_file.read()
 
-    try:
-        # Lire les données du client
-        data = ssl_socket.recv(1024)
-        print('Données reçues:', data.decode('utf-8'))
+    secure_client_socket.send(server_cert_bytes)
 
-        # Envoyer une réponse
-        ssl_socket.sendall('Message reçu par le serveur'.encode('utf-8'))
+    while True:
+        # Attente de données depuis le client
+        data = secure_client_socket.recv(1024).decode('utf-8')
 
-    finally:
-        # Fermer la connexion
-        ssl_socket.close()
+        if not data:
+            break
+
+        print(f"Client: {data}")
+
+        # Réponse au client
+        message = input("Serveur: ")
+        secure_client_socket.send(message.encode('utf-8'))
+
+except ssl.SSLError as e:
+    print(f"Une erreur SSL s'est produite : {e}")
+
+except Exception as e:
+    print(f"Une erreur inattendue s'est produite : {e}")
+
+finally:
+    # Fermeture des connexions
+    if secure_client_socket:
+        secure_client_socket.close()
+
+    server_socket.close()
