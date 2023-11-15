@@ -19,7 +19,7 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
 
 # Verification du certificat
-context.load_verify_locations(cafile='root_ca.cert.pem')
+context.load_verify_locations(cafile='root-ca-lorne.pem')
 
 # Wrapping du socket dans SSL
 secure_client_socket = context.wrap_socket(client_socket, server_hostname=HOST)
