@@ -25,34 +25,38 @@ context.load_verify_locations(cafile='root-ca-lorne.pem')
 secure_client_socket = context.wrap_socket(client_socket, server_hostname=HOST)
 
 # Réception du certificat du serveur
-server_cert_bytes = secure_client_socket.recv(4096)
-server_cert = x509.load_pem_x509_certificate(
-    server_cert_bytes, default_backend())
+try:
+    server_cert_bytes = secure_client_socket.recv(4096)
+    server_cert = x509.load_pem_x509_certificate(
+        server_cert_bytes, default_backend())
 
-# Ajoutez ici votre logique de vérification du certificat (nom de domaine, date, CA, etc.)
-print(f"Certificat du serveur décodé:\n{server_cert}")
+    # Ajoutez ici votre logique de vérification du certificat (nom de domaine, date, CA, etc.)
+    print(f"Certificat du serveur décodé:\n{server_cert}")
 
-# Extraction du Common Name (CN) du certificat
-common_name = server_cert.subject.get_attributes_for_oid(
-    x509.NameOID.COMMON_NAME)[0].value
+    # Extraction du Common Name (CN) du certificat
+    common_name = server_cert.subject.get_attributes_for_oid(
+        x509.NameOID.COMMON_NAME)[0].value
 
-# Comparaison avec la variable HOST
-if common_name == HOST:
-    print(f"Le Common Name (CN) du certificat correspond à {HOST}")
-else:
-    print(f"Le Common Name (CN) du certificat ne correspond pas à {HOST}")
-    # Annulation de la connexion
-    secure_client_socket.close()
-    sys.exit("La connexion est annulée en raison d'une non-correspondance du Common Name (CN).")
+    # Comparaison avec la variable HOST
+    if common_name == HOST:
+        print(f"Le Common Name (CN) du certificat correspond à {HOST}")
+    else:
+        print(f"Le Common Name (CN) du certificat ne correspond pas à {HOST}")
+        # Annulation de la connexion
+        secure_client_socket.close()
+        sys.exit("La connexion est annulée en raison d'une non-correspondance du Common Name (CN).")
 
-while True:
-    # Envoi de données au serveur
-    message = input("Client: ")
-    secure_client_socket.send(message.encode('utf-8'))
+    while True:
+        # Envoi de données au serveur
+        message = input("Client: ")
+        secure_client_socket.send(message.encode('utf-8'))
 
-    # Attente de la réponse du serveur
-    data = secure_client_socket.recv(1024).decode('utf-8')
-    print(f"Serveur: {data}")
+        # Attente de la réponse du serveur
+        data = secure_client_socket.recv(1024).decode('utf-8')
+        print(f"Serveur: {data}")
+
+except:
+    print("Unexpected error:", sys.exc_info()[0])
 
 # Fermeture de la connexion
 secure_client_socket.close()
