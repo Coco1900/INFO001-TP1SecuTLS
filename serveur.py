@@ -7,12 +7,9 @@ PORT = 12345         # Port d'écoute du serveur
 CERTFILE = 'serveur_http.cert.pem'  # Chemin vers le certificat du serveur
 KEYFILE = 'serveur_http.pem'   # Chemin vers la clé privée du serveur
 
-# Configuration du serveur
-server_address = (HOST, PORT)
-
-# Créer un socket
+# Création du socket serveur
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind(server_address)
+server_socket.bind((HOST, PORT))
 server_socket.listen()
 
 print(f"Le serveur écoute sur {HOST}:{PORT}")
@@ -24,17 +21,15 @@ try:
     # Attente de la connexion d'un client
     client_socket, client_address = server_socket.accept()
     print(f"Connexion établie avec {client_address}")
-    print('ici')
+
     # Wrapping du socket dans SSL
     secure_client_socket = ssl.wrap_socket(
         client_socket, keyfile=KEYFILE, certfile=CERTFILE, server_side=True)
-    print('la')
 
     # Envoi du certificat au client
     with open(CERTFILE, 'rb') as cert_file:
         server_cert_bytes = cert_file.read()
 
-    print('ENVCORE L0')
     secure_client_socket.send(server_cert_bytes)
 
     while True:
