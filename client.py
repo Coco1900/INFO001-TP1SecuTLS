@@ -5,7 +5,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
 # Paramètres du client
-HOST = 'www.pagin.fr'  # Adresse IP du serveur
+HOST = 'www.cacahuete.fr'  # Adresse IP du serveur
 PORT = 12345         # Port d'écoute du serveur
 
 # Création du socket client
